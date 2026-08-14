@@ -5,7 +5,9 @@ export const CELL_COUNT = 81;
 export type Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export type Grid = Digit[];
 
-export type Difficulty = "easy" | "medium" | "hard";
+export type Difficulty = "easy" | "medium" | "hard" | "extreme";
+
+export const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard", "extreme"];
 
 /**
  * Human-style techniques. V1 uses singles for rating and logical solving.
@@ -30,6 +32,11 @@ export interface DifficultyRating {
   clueCount: number;
   /** True when the puzzle can be finished with naked + hidden singles. */
   singlesOnly: boolean;
+  /**
+   * Cells still empty once the logical pipeline stalls. Higher means more
+   * deduction beyond the implemented techniques is required.
+   */
+  singlesStall: number;
   /** Backtracking nodes visited by the search solver. */
   searchNodes: number;
   /** Hardest technique required. Expand as techniques are added. */

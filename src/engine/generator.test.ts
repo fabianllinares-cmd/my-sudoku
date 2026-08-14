@@ -19,7 +19,7 @@ describe("completed grid generator", () => {
 });
 
 describe("puzzle generator", () => {
-  const difficulties: Difficulty[] = ["easy", "medium", "hard"];
+  const difficulties: Difficulty[] = ["easy", "medium", "hard", "extreme"];
 
   it("generates unique puzzles for each difficulty", () => {
     for (const difficulty of difficulties) {

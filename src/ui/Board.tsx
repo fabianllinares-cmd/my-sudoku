@@ -12,6 +12,8 @@ interface BoardProps {
   onSelect: (cell: number) => void;
 }
 
+const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+
 export function Board({
   puzzle,
   grid,
@@ -37,20 +39,22 @@ export function Board({
         const conflict = conflicts[cell];
         const col = colOf(cell);
         const row = rowOf(cell);
+        const candidates = value === 0 ? digitsFromMask(notes[cell]!) : [];
+        const matchesCandidate = selectedDigit !== 0 && candidates.includes(selectedDigit);
+
         const classes = [
           "cell",
           clue ? "clue" : "player",
           selectedCell ? "selected" : "",
           inRow || inCol || inBox ? "peer" : "",
           sameNumber ? "same" : "",
+          matchesCandidate ? "same-note" : "",
           mistake || conflict ? "conflict" : "",
           col === 2 || col === 5 ? "box-right" : "",
           row === 2 || row === 5 ? "box-bottom" : "",
         ]
           .filter(Boolean)
           .join(" ");
-
-        const candidates = value === 0 ? digitsFromMask(notes[cell]!) : [];
 
         return (
           <button
@@ -67,11 +71,15 @@ export function Board({
               <span className="digit">{value}</span>
             ) : (
               <span className="notes" aria-hidden={candidates.length === 0}>
-                {([1, 2, 3, 4, 5, 6, 7, 8, 9] as const).map((digit) => (
-                  <span key={digit} className={candidates.includes(digit) ? "note on" : "note"}>
-                    {candidates.includes(digit) ? digit : ""}
-                  </span>
-                ))}
+                {DIGITS.map((digit) => {
+                  const present = candidates.includes(digit);
+                  const match = present && digit === selectedDigit;
+                  return (
+                    <span key={digit} className={`note${present ? " on" : ""}${match ? " match" : ""}`}>
+                      {present ? digit : ""}
+                    </span>
+                  );
+                })}
               </span>
             )}
           </button>
