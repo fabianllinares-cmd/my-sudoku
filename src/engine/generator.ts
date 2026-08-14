@@ -1,5 +1,5 @@
 import { cloneGrid, countClues, emptyGrid } from "./board";
-import { matchesDifficulty, ratePuzzle, DIFFICULTY_TARGETS } from "./difficulty";
+import { hardnessScore, matchesDifficulty, ratePuzzle, DIFFICULTY_TARGETS } from "./difficulty";
 import { mulberry32, shuffle } from "./rng";
 import { countSolutions, hasUniqueSolution, solveRandomized } from "./solver";
 import { solvableWithSingles } from "./techniques";
@@ -70,24 +70,46 @@ function carvePuzzle(solution: Grid, difficulty: Difficulty, random: () => numbe
   return puzzle;
 }
 
+/**
+ * Levels gated on solving difficulty keep the hardest sample seen so far, so a
+ * fallback puzzle is still meaningfully harder than the level below it.
+ */
+function preferCandidate(
+  candidate: GeneratedPuzzle,
+  incumbent: GeneratedPuzzle | null,
+  gated: boolean,
+): boolean {
+  if (!incumbent) return true;
+  if (!gated) return true;
+  return hardnessScore(candidate.rating) > hardnessScore(incumbent.rating);
+}
+
 export function generatePuzzle(
   difficulty: Difficulty,
   random: () => number = Math.random,
 ): GeneratedPuzzle {
-  let last: GeneratedPuzzle | null = null;
-  for (let attempt = 0; attempt < 12; attempt += 1) {
+  const target = DIFFICULTY_TARGETS[difficulty];
+  const gated = target.minSinglesStall > 0 || target.minSearchNodes > 0;
+  let best: GeneratedPuzzle | null = null;
+
+  for (let attempt = 0; attempt < target.attempts; attempt += 1) {
     const solution = generateCompletedGrid(random);
     const puzzle = carvePuzzle(solution, difficulty, random);
     const rating = ratePuzzle(puzzle, difficulty);
-    last = { puzzle, solution, rating };
+    const candidate: GeneratedPuzzle = { puzzle, solution, rating };
+
     if (matchesDifficulty(rating, difficulty) && hasUniqueSolution(puzzle)) {
-      return last;
+      return candidate;
+    }
+    if (preferCandidate(candidate, best, gated)) {
+      best = candidate;
     }
   }
-  if (!last) {
+
+  if (!best) {
     throw new Error("Puzzle generation failed");
   }
-  return last;
+  return best;
 }
 
 export function generatePuzzleWithSeed(difficulty: Difficulty, seed: number): GeneratedPuzzle {
