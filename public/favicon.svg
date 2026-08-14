@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="12" fill="#6366f1" />
+  <g stroke="#e0e7ff" stroke-width="2" opacity="0.85">
+    <line x1="22" y1="8" x2="22" y2="56" />
+    <line x1="42" y1="8" x2="42" y2="56" />
+    <line x1="8" y1="22" x2="56" y2="22" />
+    <line x1="8" y1="42" x2="56" y2="42" />
+  </g>
+  <g fill="#ffffff" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="16" text-anchor="middle">
+    <text x="15" y="20">5</text>
+    <text x="53" y="20">3</text>
+    <text x="32" y="40">7</text>
+    <text x="15" y="60">1</text>
+    <text x="53" y="60">9</text>
+  </g>
+</svg>
