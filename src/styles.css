@@ -6,9 +6,9 @@
   --board: #fffdf8;
   --line: #d7cfc2;
   --box: #2b2622;
-  --selected: #cfe0f6;
-  --peer: #f4eee4;
-  --same: #d7ead0;
+  --selected: #b7d3f7;
+  --peer: #e3eef8;
+  --same: #c8e2be;
   --user: #1e56c4;
   --error: #c42b2b;
   --accent: #1e56c4;
@@ -242,7 +242,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.52rem, 2.7vw, 0.78rem);
+  font-size: clamp(0.58rem, 3vw, 0.84rem);
   font-weight: 700;
   color: var(--muted);
   line-height: 1;
