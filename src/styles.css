@@ -1,0 +1,389 @@
+:root {
+  color-scheme: light;
+  --bg: #efe8db;
+  --ink: #1c1916;
+  --muted: #7a746b;
+  --board: #fffdf8;
+  --line: #d7cfc2;
+  --box: #2b2622;
+  --selected: #cfe0f6;
+  --peer: #f4eee4;
+  --same: #d7ead0;
+  --user: #1e56c4;
+  --error: #c42b2b;
+  --accent: #1e56c4;
+  --btn: #ffffff;
+  --btn-active: #1e56c4;
+  --shadow: 0 10px 28px rgba(48, 38, 22, 0.08);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  min-height: 100dvh;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.app {
+  width: min(100%, 460px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(10px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title-row,
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
+}
+
+.new-btn,
+.primary-btn,
+.ghost-btn,
+.diff-btn,
+.num-btn,
+.tool-btn {
+  border: 0;
+  border-radius: 12px;
+  background: var(--btn);
+  box-shadow: var(--shadow);
+}
+
+.new-btn,
+.primary-btn {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 14px;
+  min-height: 40px;
+}
+
+.status-row {
+  gap: 10px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 52px;
+}
+
+.stat-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.difficulty {
+  display: flex;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: var(--shadow);
+}
+
+.diff-btn {
+  box-shadow: none;
+  background: transparent;
+  text-transform: capitalize;
+  padding: 7px 10px;
+  min-height: 34px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.diff-btn.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.board-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--board);
+  border: 2px solid var(--box);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.cell {
+  position: relative;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  padding: 0;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.cell:nth-child(9n) {
+  border-right: 0;
+}
+
+.cell:nth-child(n + 73) {
+  border-bottom: 0;
+}
+
+.cell.box-right {
+  border-right: 2px solid var(--box);
+}
+
+.cell.box-bottom {
+  border-bottom: 2px solid var(--box);
+}
+
+.cell.peer {
+  background: var(--peer);
+}
+
+.cell.same {
+  background: var(--same);
+}
+
+.cell.selected {
+  background: var(--selected);
+  box-shadow: inset 0 0 0 2px var(--accent);
+  z-index: 1;
+}
+
+.cell.clue .digit {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.cell.player .digit {
+  color: var(--user);
+  font-weight: 600;
+}
+
+.cell.conflict .digit {
+  color: var(--error);
+}
+
+.digit {
+  font-size: clamp(1.15rem, 6.4vw, 1.85rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.notes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 100%;
+  height: 100%;
+  padding: 2px 1px;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.52rem, 2.7vw, 0.78rem);
+  font-weight: 700;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.generating {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(239, 232, 219, 0.72);
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(30, 86, 196, 0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.number-pad {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 6px;
+}
+
+.num-btn {
+  min-height: 52px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--user);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.tool-btn {
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tool-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tool-btn.active {
+  background: var(--btn-active);
+  color: #fff;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 25, 22, 0.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  z-index: 10;
+}
+
+.modal {
+  width: min(100%, 420px);
+  background: var(--board);
+  border-radius: 18px;
+  padding: 22px 20px 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+.modal h2 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+}
+
+.complete-stats {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.complete-stats strong {
+  display: block;
+  color: var(--ink);
+  font-size: 1.2rem;
+  margin-top: 2px;
+}
+
+.confirm-copy {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-actions .ghost-btn,
+.modal-actions .primary-btn,
+.modal .primary-btn {
+  flex: 1;
+}
+
+.ghost-btn {
+  min-height: 44px;
+  background: #efe8db;
+}
+
+@media (min-height: 760px) {
+  .app {
+    gap: 14px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+  }
+
+  .num-btn {
+    min-height: 58px;
+  }
+}
