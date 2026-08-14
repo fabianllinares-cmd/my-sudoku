@@ -8,7 +8,7 @@
   --selected: #b7d3f7;
   --peer: #e3eef8;
   --same: #c8e2be;
-  --same-note: #f6ecd2;
+  --same-note: #fbf5e7;
   --note: #6f6a61;
   --note-match: #0b3ea8;
   --note-match-bg: #bed6ff;
@@ -38,7 +38,7 @@
   --selected: #2f5488;
   --peer: #242b36;
   --same: #2c4a35;
-  --same-note: #2a2b23;
+  --same-note: #23252b;
   --note: #a3adbb;
   --note-match: #0a1526;
   --note-match-bg: #7fb2ff;
@@ -377,7 +377,7 @@ h1 {
   position: absolute;
   top: 4px;
   right: 4px;
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   font-weight: 700;
   line-height: 1;
   color: var(--muted);
@@ -396,7 +396,7 @@ h1 {
 
 .num-btn.complete .num-left {
   color: var(--accent);
-  font-size: 0.66rem;
+  font-size: 0.7rem;
 }
 
 .actions {
