@@ -1,22 +1,31 @@
-import type { Digit } from "../engine";
+import type { DigitProgress, Digit } from "../engine";
 
 interface NumberPadProps {
+  digits: DigitProgress[];
   disabled: boolean;
   onEnter: (digit: Digit) => void;
 }
 
-export function NumberPad({ disabled, onEnter }: NumberPadProps) {
+export function NumberPad({ digits, disabled, onEnter }: NumberPadProps) {
   return (
     <div className="number-pad" role="group" aria-label="Numbers">
-      {([1, 2, 3, 4, 5, 6, 7, 8, 9] as const).map((digit) => (
+      {digits.map((entry) => (
         <button
-          key={digit}
+          key={entry.digit}
           type="button"
-          className="num-btn"
+          className={`num-btn${entry.completed ? " complete" : ""}`}
           disabled={disabled}
-          onClick={() => onEnter(digit)}
+          aria-label={
+            entry.completed
+              ? `${entry.digit}, all placed`
+              : `${entry.digit}, ${entry.remaining} remaining`
+          }
+          onClick={() => onEnter(entry.digit)}
         >
-          {digit}
+          <span className="num-digit">{entry.digit}</span>
+          <span className="num-left" aria-hidden="true">
+            {entry.completed ? "✓" : entry.remaining}
+          </span>
         </button>
       ))}
     </div>

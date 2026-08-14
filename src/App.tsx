@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Difficulty, Digit } from "./engine";
-import { useGame } from "./game/useGame";
+import { useGame, useTheme } from "./game/useGame";
 import { Actions } from "./ui/Actions";
 import { Board } from "./ui/Board";
 import { CompletionModal } from "./ui/CompletionModal";
@@ -10,6 +10,7 @@ import { NumberPad } from "./ui/NumberPad";
 
 export default function App() {
   const game = useGame();
+  const { theme, toggleTheme } = useTheme();
   const [pendingDifficulty, setPendingDifficulty] = useState<Difficulty | null>(null);
 
   const requestNewGame = useCallback(
@@ -78,8 +79,10 @@ export default function App() {
         mistakes={game.mistakes}
         difficulty={game.difficulty}
         generating={game.generating}
+        theme={theme}
         onNewGame={() => requestNewGame(game.difficulty)}
         onDifficulty={(difficulty) => requestNewGame(difficulty)}
+        onToggleTheme={toggleTheme}
       />
 
       <main className="board-wrap">
@@ -101,7 +104,11 @@ export default function App() {
         )}
       </main>
 
-      <NumberPad disabled={boardDisabled || game.completed} onEnter={game.enterDigit} />
+      <NumberPad
+        digits={game.digits}
+        disabled={boardDisabled || game.completed}
+        onEnter={game.enterDigit}
+      />
       <Actions
         pencilMode={game.pencilMode}
         autoPencil={game.autoPencil}
