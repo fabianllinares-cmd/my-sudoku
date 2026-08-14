@@ -2,17 +2,20 @@ import type { Difficulty, Digit, GeneratedPuzzle, Grid } from "../engine";
 
 export interface BoardSnapshot {
   grid: Grid;
-  notes: number[];
+  manualNotes: number[];
   mistakes: number;
   completed: boolean;
-  autoPencil: boolean;
 }
 
 export interface GameState {
   puzzle: Grid;
   solution: Grid;
   grid: Grid;
-  notes: number[];
+  /**
+   * Player-entered pencil marks. Auto Pencil candidates are never stored here;
+   * they are derived from the grid so they cannot fall out of sync.
+   */
+  manualNotes: number[];
   autoPencil: boolean;
   pencilMode: boolean;
   selected: number | null;
@@ -27,8 +30,27 @@ export interface GameState {
 
 export const STORAGE_KEY = "my-sudoku:v1";
 export const UNDO_LIMIT = 80;
+export const SAVE_VERSION = 2;
 
 export interface SavedGame {
+  version: number;
+  puzzle: Grid;
+  solution: Grid;
+  grid: Grid;
+  manualNotes: number[];
+  autoPencil: boolean;
+  pencilMode: boolean;
+  selected: number | null;
+  difficulty: Difficulty;
+  elapsedMs: number;
+  mistakes: number;
+  completed: boolean;
+  undoStack: BoardSnapshot[];
+  savedAt: number;
+}
+
+/** Version 1 stored the displayed notes, which could be auto-generated. */
+export interface SavedGameV1 {
   version: 1;
   puzzle: Grid;
   solution: Grid;
@@ -41,7 +63,7 @@ export interface SavedGame {
   elapsedMs: number;
   mistakes: number;
   completed: boolean;
-  undoStack: BoardSnapshot[];
+  undoStack: { grid: Grid; notes: number[]; mistakes: number; completed: boolean }[];
   savedAt: number;
 }
 
