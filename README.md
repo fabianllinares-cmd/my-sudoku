@@ -17,6 +17,14 @@ Then open the printed local URL.
 npm test
 ```
 
+## Play on GitHub Pages
+
+https://fabianllinares-cmd.github.io/my-sudoku/
+
+On Android Chrome: open that URL → menu → **Add to Home screen**. After install it works offline.
+
+Pushes to `main` build, test, and deploy the app with GitHub Actions.
+
 ## Build / installable app
 
 ```bash
@@ -24,7 +32,7 @@ npm run build
 npm run preview
 ```
 
-On Android Chrome: open the app → menu → **Add to Home screen**. After that it launches as a standalone app and continues to work offline.
+The production preview is served at `/my-sudoku/` (same path as GitHub Pages).
 
 ## Features (V1)
 
