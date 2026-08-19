@@ -1,6 +1,7 @@
 export type { Digit, Grid, Difficulty, DifficultyRating, GeneratedPuzzle, TechniqueName } from "./types";
 export { emptyGrid, cloneGrid, countClues, parseGrid, serializeGrid, emptyNotes } from "./board";
-export { calculateCandidateMasks, calculateCandidates, syncAutoPencilNotes } from "./candidates";
+export { calculateCandidateMasks, calculateCandidates } from "./candidates";
+export { autoPencilNotes, removeNoteFromPeers, invalidNoteMasks, hasInvalidNotes } from "./notes";
 export { solve, countSolutions, hasUniqueSolution } from "./solver";
 export { generateCompletedGrid, generatePuzzle, generatePuzzleWithSeed } from "./generator";
 export { findPeerConflicts, hasPeerConflict, isCorrectPlacement, isPuzzleComplete, isFilledValidSudoku } from "./validator";
@@ -9,6 +10,6 @@ export { ratePuzzle, matchesDifficulty, searchComplexity, DIFFICULTY_TARGETS } f
 export { digitProgress, remainingDigitCounts } from "./progress";
 export type { DigitProgress } from "./progress";
 export { digitsFromMask, digitBit, toggleDigit, hasDigit, ALL_CANDIDATES } from "./bits";
-export { rowOf, colOf, boxOf, cellIndex } from "./units";
+export { rowOf, colOf, boxOf, cellIndex, PEERS } from "./units";
 export { SIZE, CELL_COUNT, BOX, DIFFICULTIES } from "./types";
 export { mulberry32, randomSeed } from "./rng";

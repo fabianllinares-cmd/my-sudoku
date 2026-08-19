@@ -39,14 +39,3 @@ export function calculateCandidateMasks(grid: Grid): number[] {
 export function calculateCandidates(grid: Grid): Digit[][] {
   return calculateCandidateMasks(grid).map(digitsFromMask);
 }
-
-/** Recalculate all candidates after a board change when Auto Pencil is on. */
-export function syncAutoPencilNotes(grid: Grid): number[] {
-  return calculateCandidateMasks(grid);
-}
-
-export function notesAfterManualPlace(notes: number[], cell: number): number[] {
-  const next = notes.slice();
-  next[cell] = 0;
-  return next;
-}
