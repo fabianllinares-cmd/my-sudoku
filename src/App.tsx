@@ -40,7 +40,7 @@ export default function App() {
         return;
       }
       if (event.key === "a" || event.key === "A") {
-        game.toggleAutoPencil();
+        game.autoPencil();
         return;
       }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
@@ -90,6 +90,7 @@ export default function App() {
           puzzle={game.puzzle}
           grid={game.grid}
           notes={game.notes}
+          invalidNotes={game.invalidNotes}
           solution={game.solution}
           selected={game.selected}
           conflicts={game.conflicts}
@@ -111,13 +112,12 @@ export default function App() {
       />
       <Actions
         pencilMode={game.pencilMode}
-        autoPencil={game.autoPencil}
         canUndo={game.canUndo}
         disabled={boardDisabled || game.completed}
         onErase={game.erase}
         onTogglePencil={game.togglePencil}
         onUndo={game.undo}
-        onToggleAutoPencil={game.toggleAutoPencil}
+        onAutoPencil={game.autoPencil}
       />
 
       {game.completed && (

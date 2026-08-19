@@ -323,6 +323,13 @@ h1 {
   font-weight: 800;
 }
 
+/* A note the board currently forbids. Allowed, but flagged. */
+.note.invalid {
+  color: var(--error);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
 .generating {
   position: absolute;
   inset: 0;

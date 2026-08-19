@@ -2,15 +2,41 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { findPeerConflicts } from "../engine";
 import type { Difficulty, Digit } from "../engine";
 import { generatePuzzleAsync } from "./generate";
-import { createInitialState, reduce, selectDigitProgress, selectNotes, toSavedGame } from "./gameState";
+import {
+  createInitialState,
+  reduce,
+  selectDigitProgress,
+  selectElapsedMs,
+  selectInvalidNotes,
+  toSavedGame,
+} from "./gameState";
 import { loadSavedGame, saveGame } from "./persistence";
 import { applyTheme, loadTheme, nextTheme, saveTheme } from "./theme";
 import type { Theme } from "./theme";
 
+/** How often the displayed clock refreshes while play is active. */
+const DISPLAY_INTERVAL_MS = 500;
+/** Safety net so a hard kill loses at most this much active time. */
+const AUTOSAVE_INTERVAL_MS = 20_000;
+
+function isVisible(): boolean {
+  return typeof document === "undefined" || document.visibilityState !== "hidden";
+}
+
 export function useGame() {
   const [state, dispatch] = useReducer(reduce, "easy", createInitialState);
-  const lastTick = useRef(Date.now());
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const hydrated = useRef(false);
+
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  /** Saves always store a paused timer holding the active time so far. */
+  const persist = useCallback((now: number = Date.now()) => {
+    const current = stateRef.current;
+    if (!current.hasPuzzle || current.generating) return;
+    saveGame(toSavedGame(current, now));
+  }, []);
 
   useEffect(() => {
     if (hydrated.current) return;
@@ -34,48 +60,80 @@ export function useGame() {
     });
   }, []);
 
+  // Start counting once a puzzle is playable and the app is on screen.
   useEffect(() => {
-    lastTick.current = Date.now();
-    const id = window.setInterval(() => {
-      if (document.hidden) {
-        lastTick.current = Date.now();
-        return;
-      }
+    if (!state.hasPuzzle || state.generating || state.completed || !isVisible()) return;
+    dispatch({ type: "resume", now: Date.now() });
+  }, [state.hasPuzzle, state.generating, state.completed]);
+
+  // Visibility is the source of truth for active time: no interval has to keep
+  // running in the background, and hidden time is never counted.
+  useEffect(() => {
+    const pause = () => {
       const now = Date.now();
-      const delta = now - lastTick.current;
-      lastTick.current = now;
-      if (delta > 0) dispatch({ type: "tick", deltaMs: delta });
-    }, 250);
+      dispatch({ type: "pause", now });
+      persist(now);
+    };
+    const sync = () => {
+      if (isVisible()) dispatch({ type: "resume", now: Date.now() });
+      else pause();
+    };
+
+    document.addEventListener("visibilitychange", sync);
+    window.addEventListener("pagehide", pause);
+    window.addEventListener("freeze", pause);
+    window.addEventListener("pageshow", sync);
+    return () => {
+      document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("pagehide", pause);
+      window.removeEventListener("freeze", pause);
+      window.removeEventListener("pageshow", sync);
+    };
+  }, [persist]);
+
+  // Only drives the display; accumulated time never depends on it firing.
+  useEffect(() => {
+    if (state.timer.runningSince === null) return;
+    setNowMs(Date.now());
+    const id = window.setInterval(() => setNowMs(Date.now()), DISPLAY_INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, []);
+  }, [state.timer.runningSince]);
 
   useEffect(() => {
-    if (!state.hasPuzzle || state.generating) return;
-    saveGame(toSavedGame(state));
-  }, [state]);
+    persist();
+  }, [state, persist]);
 
-  const notes = useMemo(() => selectNotes(state), [state]);
+  useEffect(() => {
+    if (state.timer.runningSince === null) return;
+    const id = window.setInterval(() => persist(), AUTOSAVE_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [state.timer.runningSince, persist]);
+
+  const invalidNotes = useMemo(() => selectInvalidNotes(state), [state]);
   const digits = useMemo(() => selectDigitProgress(state), [state]);
   const conflicts = useMemo(() => findPeerConflicts(state.grid), [state.grid]);
   const hasProgress = useMemo(() => {
     if (!state.hasPuzzle) return false;
     return (
       state.grid.some((value, cell) => value !== state.puzzle[cell]) ||
-      state.manualNotes.some((mask) => mask !== 0)
+      state.playerNotes.some((mask) => mask !== 0)
     );
-  }, [state.grid, state.manualNotes, state.hasPuzzle, state.puzzle]);
+  }, [state.grid, state.playerNotes, state.hasPuzzle, state.puzzle]);
 
   return {
     ...state,
-    notes,
+    notes: state.playerNotes,
+    invalidNotes,
     digits,
     conflicts,
     hasProgress,
+    elapsedMs: selectElapsedMs(state, nowMs),
+    timerRunning: state.timer.runningSince !== null,
     selectCell: (cell: number) => dispatch({ type: "select", cell }),
-    enterDigit: (digit: Digit) => dispatch({ type: "enter", digit }),
+    enterDigit: (digit: Digit) => dispatch({ type: "enter", digit, now: Date.now() }),
     erase: () => dispatch({ type: "erase" }),
     togglePencil: () => dispatch({ type: "togglePencil" }),
-    toggleAutoPencil: () => dispatch({ type: "toggleAutoPencil" }),
+    autoPencil: () => dispatch({ type: "autoPencil" }),
     undo: () => dispatch({ type: "undo" }),
     startNewGame,
     canUndo: state.undoStack.length > 0 && !state.generating,
