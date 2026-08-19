@@ -1,14 +1,17 @@
 import {
-  calculateCandidateMasks,
+  autoPencilNotes,
   cloneGrid,
   digitProgress,
   emptyGrid,
   emptyNotes,
+  invalidNoteMasks,
   isCorrectPlacement,
   isPuzzleComplete,
+  removeNoteFromPeers,
   toggleDigit,
 } from "../engine";
 import type { DigitProgress, Difficulty } from "../engine";
+import { createTimer, elapsedMs, pauseTimer, startTimer } from "./timer";
 import type { BoardSnapshot, GameAction, GameState, SavedGame } from "./types";
 import { SAVE_VERSION, UNDO_LIMIT } from "./types";
 
@@ -17,12 +20,11 @@ export function createInitialState(difficulty: Difficulty): GameState {
     puzzle: emptyGrid(),
     solution: emptyGrid(),
     grid: emptyGrid(),
-    manualNotes: emptyNotes(),
-    autoPencil: false,
+    playerNotes: emptyNotes(),
     pencilMode: false,
     selected: null,
     difficulty,
-    elapsedMs: 0,
+    timer: createTimer(),
     mistakes: 0,
     completed: false,
     undoStack: [],
@@ -34,7 +36,7 @@ export function createInitialState(difficulty: Difficulty): GameState {
 function snapshotOf(state: GameState): BoardSnapshot {
   return {
     grid: cloneGrid(state.grid),
-    manualNotes: state.manualNotes.slice(),
+    playerNotes: state.playerNotes.slice(),
     mistakes: state.mistakes,
     completed: state.completed,
   };
@@ -60,12 +62,11 @@ export function reduce(state: GameState, action: GameAction): GameState {
         puzzle: saved.puzzle,
         solution: saved.solution,
         grid: saved.grid,
-        manualNotes: saved.manualNotes,
-        autoPencil: saved.autoPencil,
+        playerNotes: saved.playerNotes,
         pencilMode: saved.pencilMode,
         selected: saved.selected,
         difficulty: saved.difficulty,
-        elapsedMs: saved.elapsedMs,
+        timer: createTimer(saved.timerMs),
         mistakes: saved.mistakes,
         completed: saved.completed,
         undoStack: saved.undoStack ?? [],
@@ -77,15 +78,17 @@ export function reduce(state: GameState, action: GameAction): GameState {
       if (state.generating) return state;
       return { ...state, selected: action.cell };
     case "togglePencil":
-      if (state.autoPencil) return state;
       return { ...state, pencilMode: !state.pencilMode };
-    case "toggleAutoPencil": {
-      if (state.completed || state.generating) return state;
-      const autoPencil = !state.autoPencil;
+    /**
+     * Auto Pencil is a one-shot action, not a mode: it replaces the notes with
+     * the candidates that are legal right now and then leaves them alone.
+     */
+    case "autoPencil": {
+      if (state.completed || state.generating || !state.hasPuzzle) return state;
       return {
         ...state,
-        autoPencil,
-        pencilMode: autoPencil ? false : state.pencilMode,
+        undoStack: pushUndo(state),
+        playerNotes: autoPencilNotes(state.grid),
       };
     }
     case "undo": {
@@ -94,21 +97,28 @@ export function reduce(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         grid: previous.grid,
-        manualNotes: previous.manualNotes,
+        playerNotes: previous.playerNotes,
         mistakes: previous.mistakes,
         completed: previous.completed,
         undoStack: state.undoStack.slice(0, -1),
       };
     }
-    case "tick":
-      if (state.completed || state.generating || !state.hasPuzzle) return state;
-      return { ...state, elapsedMs: state.elapsedMs + action.deltaMs };
+    case "resume": {
+      if (!state.hasPuzzle || state.completed || state.generating) return state;
+      const timer = startTimer(state.timer, action.now);
+      return timer === state.timer ? state : { ...state, timer };
+    }
+    case "pause": {
+      const timer = pauseTimer(state.timer, action.now);
+      return timer === state.timer ? state : { ...state, timer };
+    }
     case "newGameStart":
       return {
         ...state,
         generating: true,
         difficulty: action.difficulty,
         completed: false,
+        timer: createTimer(),
       };
     case "newGameReady": {
       const { puzzle, solution } = action.generated;
@@ -126,12 +136,12 @@ export function reduce(state: GameState, action: GameAction): GameState {
       if (!canEdit(state)) return state;
       const cell = state.selected!;
       if (isClue(state, cell)) return state;
-      if (state.grid[cell] === 0 && state.manualNotes[cell] === 0) return state;
+      if (state.grid[cell] === 0 && state.playerNotes[cell] === 0) return state;
       const grid = cloneGrid(state.grid);
-      const manualNotes = state.manualNotes.slice();
+      const playerNotes = state.playerNotes.slice();
       grid[cell] = 0;
-      manualNotes[cell] = 0;
-      return { ...state, undoStack: pushUndo(state), grid, manualNotes };
+      playerNotes[cell] = 0;
+      return { ...state, undoStack: pushUndo(state), grid, playerNotes };
     }
     case "enter": {
       if (!canEdit(state)) return state;
@@ -139,31 +149,36 @@ export function reduce(state: GameState, action: GameAction): GameState {
       if (isClue(state, cell)) return state;
       const digit = action.digit;
 
-      if (state.pencilMode && !state.autoPencil) {
+      if (state.pencilMode) {
+        // Any digit may be pencilled in, even one the board currently forbids.
         if (state.grid[cell] !== 0) return state;
-        const manualNotes = state.manualNotes.slice();
-        manualNotes[cell] = toggleDigit(manualNotes[cell]!, digit);
-        return { ...state, undoStack: pushUndo(state), manualNotes };
+        const playerNotes = state.playerNotes.slice();
+        playerNotes[cell] = toggleDigit(playerNotes[cell]!, digit);
+        return { ...state, undoStack: pushUndo(state), playerNotes };
       }
 
       const grid = cloneGrid(state.grid);
-      const manualNotes = state.manualNotes.slice();
+      const cleared = state.playerNotes.slice();
       const repeated = state.grid[cell] === digit;
       grid[cell] = repeated ? 0 : digit;
-      manualNotes[cell] = 0;
+      cleared[cell] = 0;
 
       if (repeated) {
-        return { ...state, undoStack: pushUndo(state), grid, manualNotes };
+        return { ...state, undoStack: pushUndo(state), grid, playerNotes: cleared };
       }
 
+      // Placing a definite digit only prunes that digit from its peers.
+      const playerNotes = removeNoteFromPeers(cleared, cell, digit);
       const incorrect = !isCorrectPlacement(state.solution, cell, digit);
+      const completed = isPuzzleComplete(grid, state.solution);
       return {
         ...state,
         undoStack: pushUndo(state),
         grid,
-        manualNotes,
+        playerNotes,
         mistakes: state.mistakes + (incorrect ? 1 : 0),
-        completed: isPuzzleComplete(grid, state.solution),
+        completed,
+        timer: completed ? pauseTimer(state.timer, action.now) : state.timer,
       };
     }
     default:
@@ -171,33 +186,33 @@ export function reduce(state: GameState, action: GameAction): GameState {
   }
 }
 
-/**
- * Notes shown on the board. With Auto Pencil on these are recalculated from the
- * current grid, so entering, erasing, and undoing all stay in sync for free.
- */
-export function selectNotes(state: GameState): number[] {
-  return state.autoPencil ? calculateCandidateMasks(state.grid) : state.manualNotes;
+/** Notes the board currently makes impossible. Derived, never stored. */
+export function selectInvalidNotes(state: GameState): number[] {
+  return invalidNoteMasks(state.playerNotes, state.grid);
 }
 
 export function selectDigitProgress(state: GameState): DigitProgress[] {
   return digitProgress(state.grid, state.solution);
 }
 
-export function toSavedGame(state: GameState): SavedGame {
+export function selectElapsedMs(state: GameState, now: number): number {
+  return elapsedMs(state.timer, now);
+}
+
+export function toSavedGame(state: GameState, now: number): SavedGame {
   return {
     version: SAVE_VERSION,
     puzzle: state.puzzle,
     solution: state.solution,
     grid: state.grid,
-    manualNotes: state.manualNotes,
-    autoPencil: state.autoPencil,
+    playerNotes: state.playerNotes,
     pencilMode: state.pencilMode,
     selected: state.selected,
     difficulty: state.difficulty,
-    elapsedMs: state.elapsedMs,
+    timerMs: elapsedMs(state.timer, now),
     mistakes: state.mistakes,
     completed: state.completed,
     undoStack: state.undoStack,
-    savedAt: Date.now(),
+    savedAt: now,
   };
 }
