@@ -1,23 +1,21 @@
 interface ActionsProps {
   pencilMode: boolean;
-  autoPencil: boolean;
   canUndo: boolean;
   disabled: boolean;
   onErase: () => void;
   onTogglePencil: () => void;
   onUndo: () => void;
-  onToggleAutoPencil: () => void;
+  onAutoPencil: () => void;
 }
 
 export function Actions({
   pencilMode,
-  autoPencil,
   canUndo,
   disabled,
   onErase,
   onTogglePencil,
   onUndo,
-  onToggleAutoPencil,
+  onAutoPencil,
 }: ActionsProps) {
   return (
     <div className="actions" role="group" aria-label="Tools">
@@ -28,7 +26,7 @@ export function Actions({
       <button
         type="button"
         className={`tool-btn ${pencilMode ? "active" : ""}`}
-        disabled={disabled || autoPencil}
+        disabled={disabled}
         aria-pressed={pencilMode}
         onClick={onTogglePencil}
       >
@@ -41,10 +39,10 @@ export function Actions({
       </button>
       <button
         type="button"
-        className={`tool-btn ${autoPencil ? "active" : ""}`}
+        className="tool-btn"
         disabled={disabled}
-        aria-pressed={autoPencil}
-        onClick={onToggleAutoPencil}
+        aria-label="Fill notes with all valid candidates"
+        onClick={onAutoPencil}
       >
         <AutoIcon />
         Auto

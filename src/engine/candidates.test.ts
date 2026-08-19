@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateCandidateMasks, calculateCandidates, syncAutoPencilNotes } from "./candidates";
+import { calculateCandidateMasks, calculateCandidates } from "./candidates";
 import { cloneGrid, parseGrid } from "./board";
 import { digitsFromMask, hasDigit } from "./bits";
 import { boxOf, colOf, rowOf } from "./units";
@@ -38,15 +38,15 @@ describe("candidates", () => {
   });
 });
 
-describe("auto pencil updates", () => {
-  it("removes a placed digit from peers in the same row, column, and box", () => {
+describe("candidates after a placement", () => {
+  it("excludes a placed digit for peers in the same row, column, and box", () => {
     const grid = cloneGrid(WIKIPEDIA_EASY);
     const cell = 2;
     const digit = 4 as Digit;
     grid[cell] = digit;
 
     const before = calculateCandidateMasks(WIKIPEDIA_EASY);
-    const after = syncAutoPencilNotes(grid);
+    const after = calculateCandidateMasks(grid);
 
     expect(after[cell]).toBe(0);
 

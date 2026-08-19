@@ -1,10 +1,11 @@
-import { boxOf, colOf, digitsFromMask, rowOf } from "../engine";
+import { boxOf, colOf, digitsFromMask, hasDigit, rowOf } from "../engine";
 import type { Grid } from "../engine";
 
 interface BoardProps {
   puzzle: Grid;
   grid: Grid;
   notes: number[];
+  invalidNotes: number[];
   solution: Grid;
   selected: number | null;
   conflicts: boolean[];
@@ -18,6 +19,7 @@ export function Board({
   puzzle,
   grid,
   notes,
+  invalidNotes,
   solution,
   selected,
   conflicts,
@@ -74,8 +76,14 @@ export function Board({
                 {DIGITS.map((digit) => {
                   const present = candidates.includes(digit);
                   const match = present && digit === selectedDigit;
+                  const impossible = present && hasDigit(invalidNotes[cell]!, digit);
                   return (
-                    <span key={digit} className={`note${present ? " on" : ""}${match ? " match" : ""}`}>
+                    <span
+                      key={digit}
+                      className={`note${present ? " on" : ""}${match ? " match" : ""}${
+                        impossible ? " invalid" : ""
+                      }`}
+                    >
                       {present ? digit : ""}
                     </span>
                   );

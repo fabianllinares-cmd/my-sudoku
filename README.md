@@ -34,9 +34,15 @@ npm run preview
 
 The production preview is served at `/my-sudoku/` (same path as GitHub Pages).
 
-## Features (V1)
+## Features
 
-- 9×9 board with row, column, box, and same-number highlights
-- Easy / Medium / Hard generation with a uniqueness-checked engine
-- Notes, Auto Pencil, undo, erase, timer, and mistake count
+- 9×9 board with row, column, box, and same-number highlights, including matching pencil notes
+- Easy / Medium / Hard / Extreme generation with a uniqueness-checked engine
+- Remaining count per digit on the keypad
+- Notes, undo, erase, mistake count, and a light/dark theme
+- Auto Pencil fills every empty cell with the candidates that are legal at that moment. It is a
+  one-shot action, so notes stay yours afterwards: placing a digit only removes that digit from its
+  row, column, and box, and a note the board forbids is flagged rather than blocked or deleted.
+- The timer counts active play only. It stops whenever the app is hidden or backgrounded and
+  resumes when it comes back, so time spent away is never counted.
 - Automatic local save and resume
